@@ -5,7 +5,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
-
+import java.util.*;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
@@ -55,7 +55,35 @@ public class WikiCrawler {
 	 */
 	public String crawl(boolean testing) throws IOException {
         // FILL THIS IN!
-		return null;
+		//return null;
+		
+        Elements info; 
+
+
+		String value = queue.remove();
+      
+
+        if(!testing)
+        {
+        	if(index.isIndexed(value)){
+        		return null;
+        	}
+        	info = wf.fetchWikipedia(value);
+        }
+        else{
+        	info = wf.readWikipedia(value);
+        }
+
+        index.indexPage(value, info);
+
+        queueInternalLinks(info);
+
+        return value;
+
+
+
+
+
 	}
 	
 	/**
@@ -66,6 +94,19 @@ public class WikiCrawler {
 	// NOTE: absence of access level modifier means package-level
 	void queueInternalLinks(Elements paragraphs) {
         // FILL THIS IN!
+        for (Element p: paragraphs){
+
+        	Elements es = p.select("a[href]");
+        	for (Element e: es) {
+            String linkRet = e.attr("href");
+
+            if (linkRet.startsWith("/wiki/")) {
+                String linkFin = e.attr("abs:href");
+                queue.offer(linkFin);
+            }
+        	}
+
+        }
 	}
 
 	public static void main(String[] args) throws IOException {

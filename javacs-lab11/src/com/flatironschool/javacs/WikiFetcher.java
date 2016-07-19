@@ -81,3 +81,4 @@ public class WikiFetcher {
 		lastRequestTime = System.currentTimeMillis();
 	}
 }
+
