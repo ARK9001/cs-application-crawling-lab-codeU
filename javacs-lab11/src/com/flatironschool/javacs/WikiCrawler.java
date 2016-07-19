@@ -5,7 +5,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
-import java.util.*;
+
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
@@ -56,34 +56,26 @@ public class WikiCrawler {
 	public String crawl(boolean testing) throws IOException {
         // FILL THIS IN!
 		//return null;
-		
-        Elements info; 
 
+		if (queue.isEmpty())
+            return null;
 
-		String value = queue.remove();
-      
-
-        if(!testing)
-        {
-        	if(index.isIndexed(value)){
-        		return null;
-        	}
-        	info = wf.fetchWikipedia(value);
-        }
-        else{
-        	info = wf.readWikipedia(value);
+        String link = queue.poll();     
+         
+        if (testing==false && index.isIndexed(link))
+             return null;
+   
+        Elements info;
+        if (testing) {
+            info = wf.readWikipedia(link);
+        } else {
+            info = wf.fetchWikipedia(link);
         }
 
-        index.indexPage(value, info);
-
+        index.indexPage(link, info);
         queueInternalLinks(info);
-
-        return value;
-
-
-
-
-
+        return link;
+        
 	}
 	
 	/**
@@ -92,24 +84,23 @@ public class WikiCrawler {
 	 * @param paragraphs
 	 */
 	// NOTE: absence of access level modifier means package-level
-	void queueInternalLinks(Elements paragraphs) {
-        // FILL THIS IN!
-        for (Element p: paragraphs){
+void queueInternalLinks(Elements paragraphs) {
+		for (Element p: paragraphs) {
+			Elements es = p.select("a[href]");
 
-        	Elements es = p.select("a[href]");
-        	for (Element e: es) {
-            String linkRet = e.attr("href");
+			for (Element e: es) {
+				String linkRet = e.attr("href");
+			
+				if (linkRet.startsWith("/wiki/")) {
 
-            if (linkRet.startsWith("/wiki/")) {
-                String linkFin = e.attr("abs:href");
-                queue.offer(linkFin);
-            }
-        	}
-
-        }
+					String linkFin = "https://en.wikipedia.org" + linkRet;
+					queue.offer(linkFin);
+			}
+		}
+		}
 	}
-
-	public static void main(String[] args) throws IOException {
+	
+public static void main(String[] args) throws IOException {
 		
 		// make a WikiCrawler
 		Jedis jedis = JedisMaker.make();
@@ -125,9 +116,6 @@ public class WikiCrawler {
 		String res;
 		do {
 			res = wc.crawl(false);
-
-            // REMOVE THIS BREAK STATEMENT WHEN crawl() IS WORKING
-            break;
 		} while (res == null);
 		
 		Map<String, Integer> map = index.getCounts("the");
